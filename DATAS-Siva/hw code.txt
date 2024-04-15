@@ -1,0 +1,110 @@
+#include <LiquidCrystal_I2C.h>
+#include <GP2Y1010AU0F.h>
+#include "DHT.h"
+
+#define DHTPIN 19
+
+#define DHTTYPE DHT11
+
+DHT dht(DHTPIN, DHTTYPE);
+
+int measurePin = 32;   // Connect dust sensor analog measure pin to D32 pin
+int ledPin     = 12;    // Connect dust sensor LED pin to D2
+
+GP2Y1010AU0F dustSensor(ledPin, measurePin); // Construct dust sensor global object
+float dv = 0;
+
+// set the LCD number of columns and rows
+int lcdColumns = 16;
+int lcdRows = 2;
+
+const int g = 34;
+const int n = 35;
+
+const int buz = 4;
+
+int tv, nv, gv, hv;
+int ts=0, ns=0, gs=0, hs=0;
+
+unsigned long delayTime;
+
+// set LCD address, number of columns and rows
+// if you don't know your display address, run an I2C scanner sketch
+LiquidCrystal_I2C lcd(0x27, lcdColumns, lcdRows);  
+
+void setup(){
+   
+  Serial.begin(9600);
+  pinMode(buz, OUTPUT);
+         
+  digitalWrite(buz, LOW);
+   dustSensor.begin();
+
+    dht.begin();
+  lcd.init();               
+  lcd.backlight();
+  
+   
+//Industrial parameter Monitoring
+lcd.clear();
+  lcd.setCursor(0, 0);
+ lcd.print("Industrial Para.");                        
+ lcd.setCursor(0, 1);
+ lcd.print("   Monitoring   "); delay(2000);
+ 
+  lcd.clear();
+  lcd.setCursor( 0, 0);
+ lcd.print("T:        H:    ");
+ lcd.setCursor( 0, 1);
+ lcd.print("G:        N:    ");
+
+
+}
+
+void loop(){
+ 
+     
+   hv = dht.readHumidity();
+  
+  tv = dht.readTemperature();
+
+   if (isnan(hv) || isnan(tv)) {
+    hv=0;tv=0;
+     return;
+  }
+  else;
+  
+dv = dustSensor.read();
+
+gv=analogRead(g);
+nv=analogRead(n);
+nv-=100;
+
+
+
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("T:");
+ 
+  lcd.print(tv); lcd.print(char(223)); lcd.print("C");lcd.print("  ");
+  
+  lcd.setCursor(9,0);
+  lcd.print("H:");
+  lcd.print(hv);lcd.print("% ");
+  lcd.setCursor(0,1);
+  lcd.print("G:");
+   lcd.print(gv);lcd.print("ppm ");
+  lcd.setCursor(9,1);
+  
+  lcd.print("N:");
+  lcd.print(nv);lcd.print("dBm");
+
+ delay(2000);
+ lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("D:");
+  lcd.print(dv);lcd.print("ug/m3");
+
+ delay(2000);
+ 
+}
